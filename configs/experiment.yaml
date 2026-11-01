@@ -1,0 +1,20 @@
+seed: 42
+split_strategy: "fixed"  # or "per_seed"
+
+data:
+  chip_size: 256
+  stride: 128
+  batch_size: 4
+  num_workers: 4
+
+training:
+  epochs: 30
+  lr: 0.0001
+  weight_decay: 0.0001
+
+models:
+  - unet
+  - deeplabv3
+  - mask2former
+  - sam_lora
+  - pspnet

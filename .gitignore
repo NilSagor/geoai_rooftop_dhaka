@@ -1,0 +1,33 @@
+# Data
+data/raw/
+data/processed/
+*.tif
+*.tiff
+
+# PyTorch / Lightning
+*.ckpt
+*.pth
+*.pt
+checkpoints/
+lightning_logs/
+logs/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.env
+build/
+dist/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE
+.idea/
+.vscode/
+.DS_Store

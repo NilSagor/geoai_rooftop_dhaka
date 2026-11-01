@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pv-segmentation"
+version = "0.1.0"
+description = "Rooftop solar PV segmentation for Dhaka"
+requires-python = ">=3.12"
+dependencies = [
+    "torch>=2.0",
+    "lightning>=2.5",
+    "torchmetrics",
+    "segmentation-models-pytorch",
+    "rasterio",
+    "geopandas",
+    "transformers",
+    "peft",
+    "segment-anything",
+    "pyyaml",
+    "pandas",
+    "scikit-learn",
+    "matplotlib",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov",
+    "ruff",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 100
