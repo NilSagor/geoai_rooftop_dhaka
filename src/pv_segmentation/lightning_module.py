@@ -8,6 +8,8 @@ from torchmetrics.classification import (
 )
 
 
+
+
 class SolarSegModule(L.LightningModule):
     def __init__(self, model: torch.nn.Module, lr: float = 1e-4, weight_decay: float = 1e-4):
         super().__init__()

@@ -13,7 +13,6 @@ from pv_segmentation.models import MODEL_BUILDERS
 
 
 
-
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", required=True, choices=list(MODEL_BUILDERS))

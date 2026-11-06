@@ -2,6 +2,7 @@
 import torch
 import torchvision.transforms.v2 as T
 
+
 # Training: geometric augmentation only, applied to concatenated tensor
 train_transform = T.Compose([
     T.RandomHorizontalFlip(p=0.5),

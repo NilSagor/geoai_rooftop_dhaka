@@ -10,6 +10,7 @@ ROOF_MAP = {
     "PV01_Rooftop_SteelTile": "steel",
 }
 
+
 def convert(src, dst, is_mask=False):
     with rasterio.open(src) as s:
         data = s.read()

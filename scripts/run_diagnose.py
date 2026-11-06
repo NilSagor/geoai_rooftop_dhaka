@@ -19,3 +19,5 @@ for m in MODELS:
             ckpt_ok = any(ckpt_dir.glob("*.ckpt"))
         status = "DONE" if n_epochs >= 30 and ckpt_ok else ("PARTIAL" if n_epochs > 0 else "MISSING")
         print(f"{m:12s} {s:>5d}  {n_epochs:>6d}  {str(ckpt_ok):>5s}  {status:>10s}")
+
+        

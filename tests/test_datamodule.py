@@ -3,6 +3,7 @@ import pytest
 from pv_segmentation.data.datamodule import SolarDataModule
 
 
+
 @pytest.mark.skipif(
     not __import__("pathlib").Path("data/processed/images").exists(),
     reason="Phase 1 processed data not available",
