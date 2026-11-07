@@ -17,6 +17,7 @@ def test_model_forward_shape(name):
     assert out.shape[-2:] == (256, 256)
 
 
+
 @pytest.mark.skipif(
     not __import__("pathlib").Path("checkpoints/sam_vit_b_01ec64.pth").exists(),
     reason="SAM checkpoint not downloaded",

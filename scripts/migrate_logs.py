@@ -7,6 +7,7 @@ trained_order = {
     "deeplabv3": [42, 123, 456, 789],
 }
 
+
 for model, seeds in trained_order.items():
     src_root = Path(f"logs/{model}")
     if not src_root.exists():

@@ -20,6 +20,7 @@ python -c "from pv_segmentation.utils.determinism import setup_determinism; setu
 pytest tests/ -v
 ```
 
+
 ## Known limitations
 Mask2Former: Uses `facebook/mask2former-swin-tiny-coco-instance` with `num_labels=2`. The load report shows some Swin params reinitialized due to transformers version drift; for production use, prefer `facebook/mask2former-swin-tiny-ade-semantic`.
 

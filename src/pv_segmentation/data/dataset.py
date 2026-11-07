@@ -9,6 +9,7 @@ from torch.utils.data import Dataset
 from pv_segmentation.transforms import apply_sync_transform
 
 
+
 class SolarChipDataset(Dataset):
     def __init__(self, root: str, split_file: str, split_name: str, transform=None):
         self.root = Path(root)

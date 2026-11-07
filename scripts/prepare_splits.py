@@ -16,3 +16,4 @@ Path("data/splits").mkdir(parents=True, exist_ok=True)
 with open("data/splits/fixed_seed42.json", "w") as f:
     json.dump(split, f, indent=2)
 print(f"train={len(split['train'])}, val={len(split['val'])}, test={len(split['test'])}")
+
