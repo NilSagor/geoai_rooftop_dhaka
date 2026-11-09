@@ -1,5 +1,6 @@
 seed: 42
-split_strategy: "fixed"  # or "per_seed"
+seeds: [42, 123, 456, 789, 1024]
+split_strategy: fixed        # fixed | per_seed
 
 data:
   chip_size: 256
@@ -8,14 +9,29 @@ data:
   num_workers: 4
 
 training:
-  epochs: 30
+  epochs: 200
   lr: 0.0001
   weight_decay: 0.0001
+  accelerator: "gpu"
+  precision: "16-mixed"
+  deterministic: warn        # true | false | warn
+  accumulate_grad_batches: 1
 
 models:
   - unet
   - deeplabv3
   - mask2former
-  - sam_lora
   - pspnet
+  - sam_lora
+
+
+# Per-model overrides. Accumulation keeps the effective batch size at 4,
+# so the comparison across models stays fair.
+overrides:
+  mask2former:
+    batch_size: 2
+    accumulate_grad_batches: 2
+  sam_lora:
+    batch_size: 1
+    accumulate_grad_batches: 4
 

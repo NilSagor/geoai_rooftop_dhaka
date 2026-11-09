@@ -3,6 +3,7 @@ import rasterio
 from rasterio.transform import from_bounds
 from pathlib import Path
 import numpy as np
+import re
 
 ROOF_MAP = {
     "PV01_Rooftop_Brick": "brick",
@@ -10,6 +11,8 @@ ROOF_MAP = {
     "PV01_Rooftop_SteelTile": "steel",
 }
 
+EXTS = {".bmp", ".tif", ".tiff", ".png", ".jpg", ".jpeg"}
+LABEL_RE = re.compile(r"_label$", re.IGNORECASE)
 
 def convert(src, dst, is_mask=False):
     with rasterio.open(src) as s:
@@ -30,17 +33,32 @@ def main(raw_dir="data/raw/PV01", out_img="data/processed/images",
     Path(out_img).mkdir(parents=True, exist_ok=True)
     Path(out_mask).mkdir(parents=True, exist_ok=True)
     for folder, prefix in ROOF_MAP.items():
-        files = sorted(Path(raw_dir, folder).glob("*"))
-        imgs = [f for f in files if "_label" not in f.stem]
-        masks = {f.stem.replace("_label", ""): f
-                 for f in files if "_label" in f.stem}
-        for idx, img in enumerate(imgs, 1):
-            if img.stem not in masks:
-                continue
+        files = sorted(f for f in Path(raw_dir, folder).rglob("*")
+                       if f.is_file() and f.suffix.lower() in EXTS)
+        imgs = {f.stem: f for f in files if not LABEL_RE.search(f.stem)}
+        masks = {LABEL_RE.sub("", f.stem): f
+                 for f in files if LABEL_RE.search(f.stem)}
+
+        paired = sorted(set(imgs) & set(masks))
+        no_mask = sorted(set(imgs) - set(masks))
+        no_img = sorted(set(masks) - set(imgs))
+
+        for idx, stem in enumerate(paired, 1):   # sequential, no gaps
             name = f"{prefix}_{idx:04d}.tif"
-            convert(img, Path(out_img, name))
-            convert(masks[img.stem], Path(out_mask, name), is_mask=True)
-        print(f"{prefix}: {len(imgs)} pairs processed")
+            convert(imgs[stem], Path(out_img, name))
+            convert(masks[stem], Path(out_mask, name), is_mask=True)
+
+        print(f"{prefix}: {len(imgs)} images, {len(masks)} masks, "
+              f"{len(paired)} pairs written")
+        if no_mask:
+            print(f"  images without mask: {no_mask[:5]}")
+        if no_img:
+            print(f"  masks without image: {no_img[:5]}")
+
+    n_i = len(list(Path(out_img).glob("*.tif")))
+    n_m = len(list(Path(out_mask).glob("*.tif")))
+    print(f"Output totals -> images: {n_i}, masks: {n_m}")
+    assert n_i == n_m, "Image/mask counts differ (stale files in output dirs?)"
 
 if __name__ == "__main__":
     main()
