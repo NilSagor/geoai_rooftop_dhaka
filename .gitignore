@@ -28,6 +28,9 @@ dist/
 .coverage
 htmlcov/
 
+results/probabilities/
+results/*.npy
+
 # IDE
 .idea/
 .vscode/
