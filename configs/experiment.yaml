@@ -22,8 +22,8 @@ models:
   - deeplabv3
   - mask2former
   - pspnet
-  - sam_lora
-
+  - boundary_unet
+  # - sam_lora
 
 # Per-model overrides. Accumulation keeps the effective batch size at 4,
 # so the comparison across models stays fair.
@@ -35,3 +35,22 @@ overrides:
     batch_size: 1
     accumulate_grad_batches: 4
 
+oversample:
+  enabled: true
+  factor: 3.0
+  corrugated_threshold: 0.02
+
+ablation:
+  variants:
+    - name: full
+      boundary: true
+      oversample: true
+    - name: no_oversample
+      boundary: true
+      oversample: false
+    - name: no_boundary
+      boundary: false
+      oversample: true
+    - name: baseline
+      boundary: false
+      oversample: false

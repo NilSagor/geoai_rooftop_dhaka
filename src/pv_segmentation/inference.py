@@ -16,7 +16,7 @@ CKPT_ROOT = Path("checkpoints")
 # Lightning renders '{val_f1:.4f}' as 'val_f1=0.8123' in the filename, e.g.
 # 'unet-epoch=12-val_f1=0.8123.ckpt' (or '...-v1.ckpt' on a name clash).
 _VAL_F1_RE = re.compile(r"val_f1=(\d+\.\d+)")
-
+_VAL_IOU_RE = re.compile(r"val_iou=(\d+\.\d+)")
 
 def run_dir(model_name: str, seed: int) -> Path:
     return CKPT_ROOT / f"{model_name}_seed{seed}"
@@ -28,9 +28,9 @@ def is_complete(model_name: str, seed: int) -> bool:
 
 
 def find_best_checkpoint(model_name: str, seed: int) -> tuple[Path, float]:
-    """Return (path, val_f1) of the best checkpoint for a (model, seed) pair.
+    """Return (path, val_iou) of the best checkpoint for a (model, seed) pair.
 
-    last.ckpt has no val_f1 in its name, so it is skipped automatically.
+    last.ckpt has no val_iou in its name, so it is skipped automatically.
     """
     ckpt_dir = run_dir(model_name, seed)
     if not ckpt_dir.exists():
@@ -38,14 +38,14 @@ def find_best_checkpoint(model_name: str, seed: int) -> tuple[Path, float]:
 
     candidates = []
     for path in ckpt_dir.glob("*.ckpt"):
-        match = _VAL_F1_RE.search(path.stem)
+        match = _VAL_IOU_RE.search(path.stem)
         if match:
             candidates.append((float(match.group(1)), path))
     if not candidates:
-        raise FileNotFoundError(f"No best-model .ckpt files in {ckpt_dir}")
+        raise FileNotFoundError(f"No best-model .ckpt files with val_iou in {ckpt_dir}")
 
-    val_f1, path = max(candidates, key=lambda t: t[0])
-    return path, val_f1
+    val_iou, path = max(candidates, key=lambda t: t[0])
+    return path, val_iou
 
 
 def load_model(
