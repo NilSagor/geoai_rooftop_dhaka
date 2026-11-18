@@ -27,3 +27,18 @@ Mask2Former: Uses `facebook/mask2former-swin-tiny-coco-instance` with `num_label
 SAM+LoRA: SAM's ViT-B uses a fused qkv projection rather than separate `q_proj/v_proj`. LoRA is applied to the fused projection, adapting q, k, and v jointly rather than only q and v. This deviates from the paper's described LoRA placement but is the only viable target in SAM's architecture
 
 SAM+LoRA null prompt: The mask decoder is invoked with zero-valued sparse and dense prompts, which is SAM's "no prompt" condition. The decoder attends to image features only and produces a dense mask. If the training loss stalls at the class prior (all-background or all-foreground), a learnable null prompt parameter can be added; the current scaffold intentionally keeps prompts fixed to isolate the LoRA adaptation effect on the image encoder.
+
+
+Ensure data/processed/manifest_split.csv has stem, split, row, col, unit, acq, block.
+
+Run scripts/prepare_dataset.py → produces processed/images/, processed/masks/*.tif, manifest_geom.csv, splits/fixed_seed42.json.
+
+Confirm train.py --smoke runs end-to-end against this layout. If it does, the dataset/datamodule side is consistent.
+
+Create data/ancillary/ and populate climate (or wire pvout into yield_model.py), tariffs, and emission factor.
+
+Create configs/economics.yaml and configs/monte_carlo.yaml from the placeholders.
+
+Implement analysis/mosaic.py (needs manifest_geom.csv).
+
+Train, predict_test.py, evaluate_ensemble.py, then run_analysis.py --steps mosaic vectorize capacity yield economics emissions priority monte_carlo

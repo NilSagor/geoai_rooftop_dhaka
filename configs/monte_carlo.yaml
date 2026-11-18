@@ -1,0 +1,171 @@
+# =============================================================================
+# Monte Carlo configuration — Dhaka rooftop PV uncertainty propagation
+# Paper sections: §Monte Carlo (H2), §Robustness (correlated RSUF draws)
+# Consumed by: src/pv_segmentation/analysis/monte_carlo.py
+# =============================================================================
+
+seed: 20240101
+
+# -----------------------------------------------------------------------------
+# Global sampler
+# -----------------------------------------------------------------------------
+sampling:
+  n_simulations: 5000          # N in the paper; 5000 is enough for stable 95% CIs
+  n_sobol_base: 1024           # Saltelli base sample size; total evals = N*(2D+2)
+  correlation_method: "gaussian"   # "gaussian" | "independence"
+  chunk_size: 1000             # vectorised batch size (memory control)
+
+# -----------------------------------------------------------------------------
+# 1. Segmentation error: area-correction factor κ = P / R
+#    Estimated per unit by block bootstrap on the test set (evaluate_paired.py).
+#    Until that exists, fill the placeholder values from your confusion matrix.
+# -----------------------------------------------------------------------------
+kappa:
+  distribution: "normal"        # κ is ≈ symmetric around the test-set P/R
+  # district-level fallback (used only if per-unit not available)
+  mean: 0.93                    # PLACEHOLDER — replace with district P/R
+  sd:   0.04                    # PLACEHOLDER — replace with block-bootstrap sd
+  clip: [0.70, 1.10]            # physical plausibility bounds
+  per_unit:                     # REQUIRED for the paper's per-unit Sobol table
+    DNCC:       {mean: 0.91, sd: 0.05}
+    DSCC:       {mean: 0.92, sd: 0.05}
+    Savar:      {mean: 0.95, sd: 0.03}
+    Keraniganj: {mean: 0.94, sd: 0.04}
+    Dhamrai:    {mean: 0.96, sd: 0.03}
+    Dohar:      {mean: 0.95, sd: 0.03}
+    Nawabganj:  {mean: 0.94, sd: 0.04}
+  _provenance: >
+    Each (mean, sd) must come from the block-bootstrap distribution of P/R
+    on the test set, per unit. Do NOT invent these; if the per-unit estimate
+    is unavailable, set per_unit to null and the script will fall back to
+    the district mean/sd with a warning.
+
+# -----------------------------------------------------------------------------
+# 2. Rooftop solar utilization factor (RSUF)
+#    Beta distribution: mean = a/(a+b), variance = ab/[(a+b)^2 (a+b+1)]
+#    Draws are independent across buildings by default; the robustness check
+#    in §Robustness sets shared_within_unit: true.
+# -----------------------------------------------------------------------------
+rsuf:
+  distribution: "beta"
+  a: 4.0                        # PLACEHOLDER — Beta(4,6) → mean 0.40, sd ≈ 0.15
+  b: 6.0                        # PLACEHOLDER
+  clip: [0.05, 0.95]
+  conservative_value: 0.40      # used by §Economics (deterministic scenario)
+  shared_within_unit: false     # if true, one draw per unit (fully correlated)
+  _provenance: >
+    Fit a and b to your building-level RSUF survey or literature values.
+    State the source in §RSUF; if using a single value in the deterministic
+    scenario, document why the MC range is wider.
+
+# -----------------------------------------------------------------------------
+# 3. Irradiance multiplier (G / G_expected)
+#    Lognormal, mean multiplier = 1. Encodes year-to-year and interannual
+#    variability + PVOUT dataset uncertainty. If you model irradiance
+#    spatially (per-building PVOUT raster), replace this with a raster sampler
+#    and set distribution: "raster".
+# -----------------------------------------------------------------------------
+irradiance:
+  distribution: "lognormal"
+  sigma: 0.05                   # PLACEHOLDER — ~5% interannual variability
+  clip: [0.80, 1.20]
+  _provenance: >
+    σ=0.05 is typical of interannual GHI variability in South Asia. If you
+    use the PVOUT raster directly (data/raw/pvout/bangladesh_pvout.tif),
+    replace this block with:
+      distribution: "raster"
+      raster_path: "data/raw/pvout/bangladesh_pvout.tif"
+      relative_sigma: 0.05
+    and extend yield_model.py accordingly.
+
+# -----------------------------------------------------------------------------
+# 4. Capital cost multiplier (CAPEX / CAPEX_central)
+#    Lognormal, mean 1. Covers module price volatility, BOS, labour,
+#    and exchange-rate risk.
+# -----------------------------------------------------------------------------
+capex:
+  distribution: "lognormal"
+  sigma: 0.15                   # PLACEHOLDER — ~15% (1σ) around central CAPEX
+  clip: [0.60, 1.60]
+  _provenance: >
+    Set σ from historical CAPEX dispersion for Bangladesh rooftop PV
+    (2018–2024) or from IRENA/SREDA ranges. Cite in §Economics.
+
+# -----------------------------------------------------------------------------
+# 5. Tariff multiplier (τ / τ_central)
+#    Lognormal, mean 1. Retail tariff trajectory and category uncertainty.
+# -----------------------------------------------------------------------------
+tariff:
+  distribution: "lognormal"
+  sigma: 0.05                   # PLACEHOLDER — ±5%
+  clip: [0.85, 1.15]
+  _provenance: >
+    Reflects uncertainty in BERC tariff adjustments and the applicable
+    consumer category. Cite the tariff order in §Economics.
+
+# -----------------------------------------------------------------------------
+# 6. Discount rate r
+#    Normal, clipped. Central value must match configs/economics.yaml.
+# -----------------------------------------------------------------------------
+discount:
+  distribution: "normal"
+  mean: 0.09                    # PLACEHOLDER — match economics.yaml
+  sd:   0.02                    # PLACEHOLDER — ±2 percentage points
+  clip: [0.01, 0.30]
+  _provenance: >
+    Bangladesh social discount rate estimates range 8–12%. Justify in
+    §Economics; the value here MUST equal configs/economics.yaml:economics.discount.
+
+# -----------------------------------------------------------------------------
+# 7. Additional inputs that enter downstream calculations
+#    (emission factor and lifetime are included in the MC so that C_u and
+#    NPV distributions reflect their uncertainty too.)
+# -----------------------------------------------------------------------------
+emission_factor:
+  distribution: "normal"
+  mean_kg_per_kwh: 0.55         # PLACEHOLDER — Bangladesh grid, latest CEA/BUET
+  sd_kg_per_kwh:   0.05
+  clip: [0.30, 0.80]
+  _provenance: >
+    Source: BPDB/CEA grid emission factor for the most recent year;
+    must match configs/economics.yaml:economics.emission_factor_kg_per_kwh.
+
+lifetime:
+  distribution: "uniform_int"
+  low: 20
+  high: 30
+  _provenance: >
+    Module warranty 25 yr ± degradation-dependent effective life;
+    document in §Economics.
+
+# -----------------------------------------------------------------------------
+# 8. Sobol sampling
+# -----------------------------------------------------------------------------
+sobol:
+  enabled: true
+  inputs: [kappa, rsuf, irradiance, capex, tariff, discount]   # 6 inputs → D=6
+  outputs: [capacity_mwp, generation_gwh, lcoe, npv, avoided_kt]
+  estimator: "saltelli"        # "saltelli" | "janon"
+  bootstrap_ci: true
+  n_bootstrap: 1000
+  _provenance: >
+    Total function evaluations = n_sobol_base * (2 * len(inputs) + 2) =
+    1024 * 14 = 14336 per unit. Confirm runtime on the target machine.
+
+# -----------------------------------------------------------------------------
+# 9. Output artefacts
+# -----------------------------------------------------------------------------
+output:
+  dir: "results/analysis/mc"
+  write_distributions: true    # → distributions.csv (p2.5, median, p97.5 per unit)
+  write_sobol:         true    # → sobol.csv (ST and CI per input per unit)
+  write_raw_draws:     false   # → draws_<unit>.parquet (large; off by default)
+  write_summary_json:  true    # → summary.json (district-level aggregates)
+
+# -----------------------------------------------------------------------------
+# 10. Reproducibility
+# -----------------------------------------------------------------------------
+reproducibility:
+  seed_strategy: "single"      # "single" | "per_unit" (per_unit offsets seed by hash(unit))
+  save_versions: true          # writes library versions to results/analysis/mc/versions.json
+  deterministic: false         # True forces numpy legacy RandomState (slower, no reason)
