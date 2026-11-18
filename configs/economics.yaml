@@ -1,0 +1,27 @@
+module:
+  area_m2: 2.0
+  rated_wp: 400
+  rsuf_conservative: 0.4
+yield:
+  eta_stc: 0.20
+  beta_per_C: 0.004
+  U0: 25.0
+  U1: 6.84
+  system_loss: 0.15
+economics:
+  currency: BDT
+  capex_per_kwp: 70000
+  opex_per_kwp_yr: 1400
+  lifetime: 25
+  discount: 0.09
+  degradation: 0.005
+  tariff: 9.5
+
+priority:
+  weights:
+    capacity_mwp: 0.4
+    yield_kwh_per_kwp: 0.3
+    roof_availability: 0.2
+    grid_proximity: 0.1
+  top_k: 3
+  rho_threshold: 0.7

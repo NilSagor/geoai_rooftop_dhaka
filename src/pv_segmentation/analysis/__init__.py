@@ -1,0 +1,1 @@
+"""Downstream analysis pipeline: vectorization → capacity → yield → economics → MC → priority."""
