@@ -44,6 +44,15 @@ Implement analysis/mosaic.py (needs manifest_geom.csv).
 Train, predict_test.py, evaluate_ensemble.py, then run_analysis.py --steps mosaic vectorize capacity yield economics emissions priority monte_carlo
 
 
+# one-time
+python -m scripts.download.download_s2 --years 2016 2017 ... 2026 --out data/chips
+python -m scripts.download.download_landsat --years 2010 2011 2012 2013 2014 2015 --out data/chips
+python -m scripts.download.rasterize_masks \
+    --footprints data/processed/footprints.gpkg --out data/chips/masks
+
+# build splits from the manifest (prep_splits.py, extended for `block`)
+python scripts/prep_splits.py --manifest data/manifest.csv --seed 42
+
 
 # 1. build the index (safe to re-run after adding years)
 python -m scripts.download.build_manifest
@@ -65,4 +74,4 @@ python scripts/train.py --model unet --seed 42
 # 5. predict + ensemble + paired eval
 python scripts/predict_test.py --scale s2 --year 2026
 python scripts/evaluate_ensemble.py
-python scripts/evaluate_paired.py        # from earlier
+python scripts/evaluate_paired.py     
