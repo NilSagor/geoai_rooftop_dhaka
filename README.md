@@ -42,3 +42,27 @@ Create configs/economics.yaml and configs/monte_carlo.yaml from the placeholders
 Implement analysis/mosaic.py (needs manifest_geom.csv).
 
 Train, predict_test.py, evaluate_ensemble.py, then run_analysis.py --steps mosaic vectorize capacity yield economics emissions priority monte_carlo
+
+
+
+# 1. build the index (safe to re-run after adding years)
+python -m scripts.download.build_manifest
+
+# 2. build splits (audit JSON is what the paper reports)
+python scripts/prep_splits.py \
+    --scales s2 --strategy fixed \
+    --min-roof-ratio 0.01
+
+# 3. patch experiment.yaml
+#    scale: s2
+#    year: 2026          # or null
+#    use_valid_mask: true
+
+# 4. train (smoke first)
+python scripts/train.py --model unet --smoke --seed 42
+python scripts/train.py --model unet --seed 42
+
+# 5. predict + ensemble + paired eval
+python scripts/predict_test.py --scale s2 --year 2026
+python scripts/evaluate_ensemble.py
+python scripts/evaluate_paired.py        # from earlier
